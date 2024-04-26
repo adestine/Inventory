@@ -15,7 +15,7 @@ $prop = [ordered]@{
     'products' = 1 # Collects system installed products
     'dnscache' = 1 # Collects DNS cache ouptut
     'pslist' = 1 # Collects process list
-    'dirlist' = 0 # Collects directory listing of user profiles 
+    'dirlist' = 1 # Collects directory listing of user profiles 
     'svcfailure' = 1 # Collectes services failure actions
     'defexcl' = 1 # Collects Defender exclusion list
     'fltmc' = 1 # Collects Defender exclusion list
@@ -27,8 +27,8 @@ $prop = [ordered]@{
 
 $config = New-Object -Type psobject -Property $prop
 $PoShSessions = Get-PSSession | ? {$_.state -eq "Opened"}
-$toolsDir = "C:\Users\arnau\OneDrive\Desktop\LS2024\Tools"
-$outputDir = "C:\Users\arnau\OneDrive\Desktop\LS2024\Output"
+$toolsDir = "C:\Users\adestine\Desktop\LS2024\Tools"
+$outputDir = "C:\Users\adestine\Desktop\LS2024\Output"
 $exhaustive = 1 # Extand Hashes collection but can take 20-25 min more depending on the size of Recycle.Bin or Program Files
 
 $scriptblock = {
@@ -416,7 +416,8 @@ $scriptblock = {
                 $maxLength = ($sizes | Measure-Object -Maximum).Maximum
 
                 #Not using convertto-html because it does not print in a pretty way (one big line instead of one entry per line 
-                $htmlTable = "<table><tr><th>Paths</th><th>Extensions</th><th>Processes</th><th>IPs</th><th>BruteForce</th><th>AttackSurface</th></tr>"
+                $htmlTable = "<table>`r`n"
+                $htmlTable += "<tr><th>Paths</th><th>Extensions</th><th>Processes</th><th>IPs</th><th>BruteForce</th><th>AttackSurface</th></tr>`r`n"
                 for($i=0;$i -lt $maxLength;$i++){
                     $htmlTable +="<tr>"
                     if($exclPath){$htmlTable +="<td>$($exclPath[$i] -replace '^$', '')</td>"}else{$htmlTable +="<td></td>"}
@@ -425,7 +426,7 @@ $scriptblock = {
                     if($exclIP){$htmlTable +="<td>$($exclIP[$i] -replace '^$', '')</td>"}else{$htmlTable +="<td></td>"}
                     if($exclBF){$htmlTable +="<td>$($exclBF[$i] -replace '^$', '')</td>"}else{$htmlTable +="<td></td>"}
                     if($exclAS){$htmlTable +="<td>$($exclAS[$i] -replace '^$', '')</td>"}else{$htmlTable +="<td></td>"}
-                    $htmlTable +="</tr>"
+                    $htmlTable +="</tr>`r`n"
                 }
                 $htmlTable += "</table>"
                 $htmlTable | Out-File -FilePath $output\defexcl.html
@@ -466,31 +467,32 @@ $scriptblock = {
         Invoke-Command -Session $session -ScriptBlock {
             Start-Job -Name Status -ScriptBlock {
                 param ($output)
-                $htmlTable = "<table><tr><th>Service</th><th>Status</th></tr>"
+                $htmlTable = "<table>`r`n"
+                $htmlTable += "<tr><th>Service</th><th>Status</th></tr>`r`n"
 
                 $FWService = Get-Service | Where-Object { $_.Name -eq "mpssvc" }
-                $htmlTable += "<tr><td>Firewall Service</td><td>"+$FWService.Status+"</td></tr>"
+                $htmlTable += "<tr><td>Firewall Service</td><td>"+$FWService.Status+"</td></tr>`r`n"
             
                 $FWProfiles = Get-NetFirewallProfile
                 $FWProfiles | ForEach-Object {
-                    $htmlTable += "<tr><td>FW Profile ("+$_.Name+")</td><td>"+$_.Enabled+"</td></tr>"
+                    $htmlTable += "<tr><td>FW Profile ("+$_.Name+")</td><td>"+$_.Enabled+"</td></tr>`r`n"
                 
                 }
             
                 $DefenderStatus = Get-MpComputerStatus
-                $htmlTable += "<tr><td>Defender - AntispywareEnabled</td><td>"+$DefenderStatus.AntispywareEnabled+"</td></tr>"
-                $htmlTable += "<tr><td>Defender - AntivirusEnabled</td><td>"+$DefenderStatus.AntivirusEnabled+"</td></tr>"
-                $htmlTable += "<tr><td>Defender - BehaviorMonitorEnabled</td><td>"+$DefenderStatus.BehaviorMonitorEnabled+"</td></tr>"
-                $htmlTable += "<tr><td>Defender - IoavProtectionEnabled</td><td>"+$DefenderStatus.IoavProtectionEnabled+"</td></tr>"
-                $htmlTable += "<tr><td>Defender - IsTamperProtected</td><td>"+$DefenderStatus.IsTamperProtected+"</td></tr>"
-                $htmlTable += "<tr><td>Defender - NISEnabled</td><td>"+$DefenderStatus.NISEnabled+"</td></tr>"
-                $htmlTable += "<tr><td>Defender - OnAccessProtectionEnabled</td><td>"+$DefenderStatus.OnAccessProtectionEnabled+"</td></tr>"
-                $htmlTable += "<tr><td>Defender - RealTimeProtectionEnabled</td><td>"+$DefenderStatus.RealTimeProtectionEnabled+"</td></tr>"
-                $htmlTable += "<tr><td>Defender - TDTStatus</td><td>"+$DefenderStatus.TDTStatus+"</td></tr>"
+                $htmlTable += "<tr><td>Defender - AntispywareEnabled</td><td>"+$DefenderStatus.AntispywareEnabled+"</td></tr>`r`n"
+                $htmlTable += "<tr><td>Defender - AntivirusEnabled</td><td>"+$DefenderStatus.AntivirusEnabled+"</td></tr>`r`n"
+                $htmlTable += "<tr><td>Defender - BehaviorMonitorEnabled</td><td>"+$DefenderStatus.BehaviorMonitorEnabled+"</td></tr>`r`n"
+                $htmlTable += "<tr><td>Defender - IoavProtectionEnabled</td><td>"+$DefenderStatus.IoavProtectionEnabled+"</td></tr>`r`n"
+                $htmlTable += "<tr><td>Defender - IsTamperProtected</td><td>"+$DefenderStatus.IsTamperProtected+"</td></tr>`r`n"
+                $htmlTable += "<tr><td>Defender - NISEnabled</td><td>"+$DefenderStatus.NISEnabled+"</td></tr>`r`n"
+                $htmlTable += "<tr><td>Defender - OnAccessProtectionEnabled</td><td>"+$DefenderStatus.OnAccessProtectionEnabled+"</td></tr>`r`n"
+                $htmlTable += "<tr><td>Defender - RealTimeProtectionEnabled</td><td>"+$DefenderStatus.RealTimeProtectionEnabled+"</td></tr>`r`n"
+                $htmlTable += "<tr><td>Defender - TDTStatus</td><td>"+$DefenderStatus.TDTStatus+"</td></tr>`r`n"
                 
                 $enabledASRRules = Get-MpPreference | Select-Object -ExpandProperty AttackSurfaceReductionRules_Ids
                 foreach ($ruleId in $enabledASRRules) {
-                    $htmlTable += "<tr><td>Defender - ASR Rules</td><td>"+$ruleId+"</td></tr>"
+                    $htmlTable += "<tr><td>Defender - ASR Rules</td><td>"+$ruleId+"</td></tr>`r`n"
                 }
 
                 $htmlTable += "</table>"
@@ -550,14 +552,15 @@ $scriptblock = {
                 param ($output,$getLocalMembers)
                 $groups = Get-LocalGroup
                 
-                $html = "<table><tr><th>GroupName</th><th>Members</th></tr>"
+                $html = "<table>`r`n"
+                $html += "<tr><th>GroupName</th><th>Members</th></tr>`r`n"
                 foreach($group in $groups){  
                     $fct = $getLocalMembers
                     $fct += 'Get-NestedLocalGroupsMembers -GroupName "'+$group.Name+'" -GroupsParsed @()'
                     $script = [scriptblock]::Create($fct)
                     $members = & $script
                     $members = $members -join ', '
-                    $html += "<tr><td>"+$Group+"</td><td>"+$members+"</td></tr>"
+                    $html += "<tr><td>"+$Group+"</td><td>"+$members+"</td></tr>`r`n"
                 }
                 
                 $html += "</table>"

@@ -1,4 +1,4 @@
-# This script generate HTML report from info collectect with 9.Inventory.ps1
+# This script generate HTML report from info collectect with Inventory.ps1
 # Arnaud Destine (c)
 # 
 # -----------------------------------#
@@ -9,12 +9,17 @@ param(
     [String]$hostname
 )
 
-$outputDir = "C:\Users\arnau\OneDrive\Desktop\LS2024\Output"
-$ogDir =  "C:\Users\arnau\OneDrive\Desktop\LS2024\Output\OGs"
-$latestDir =  "C:\Users\arnau\OneDrive\Desktop\LS2024\Output\Latests"
-$backupsDir =  "C:\Users\arnau\OneDrive\Desktop\LS2024\Output\Backups"
-$reportsDir =  "C:\Users\arnau\OneDrive\Desktop\LS2024\Output\Reports"
+$outputDir = "C:\Users\adestine\Desktop\LS2024\Output"
+$ogDir =  "C:\Users\adestine\Desktop\LS2024\Output\OGs"
+$latestDir =  "C:\Users\adestine\Desktop\LS2024\Output\Latests"
+$backupsDir =  "C:\Users\adestine\Desktop\LS2024\Output\Backups"
+$reportsDir =  "C:\Users\adestine\Desktop\LS2024\Output\Reports"
 $exhaustiveCompare = 1 # If set to true, compare Hashes, process list and netstat
+$diffEnv = 1 # If set to true the diff function will skip artefact comparission 
+# for the artefacts where there will be too much difference 
+# fwrules - because sid and appid change
+# localusers - because sid change
+# dirlist - because not relevant
  
 $colorh3 = "OrangeRed"
 $colorh1 = "Turquoise"
@@ -33,19 +38,21 @@ function Generate-Html-report-diff {
         $autoruns_new = Get-Content -Path $new_results\autoruns.html
         $autoruns_diff = Compare-Object -ReferenceObject $autoruns_og -DifferenceObject $autoruns_new -PassThru | Where-Object {$_.SideIndicator -eq '=>'}
     }
-    <#if((Test-Path $og_results\fwrules.html) -and (Test-Path $new_results\fwrules.html)){
-        write-host "[+] Comparing Firewall rules."
-        $fwrules_og = Get-Content -Path $og_results\fwrules.html
-        $fwrules_new = Get-Content -Path $new_results\fwrules.html
-        $fwrules_diff = Compare-Object -ReferenceObject $fwrules_og -DifferenceObject $fwrules_new -PassThru | Where-Object {$_.SideIndicator -eq '=>'}
-    }#>
+    if(-Not $diffEnv){
+        if((Test-Path $og_results\fwrules.html) -and (Test-Path $new_results\fwrules.html)){
+            write-host "[+] Comparing Firewall rules."
+            $fwrules_og = Get-Content -Path $og_results\fwrules.html
+            $fwrules_new = Get-Content -Path $new_results\fwrules.html
+            $fwrules_diff = Compare-Object -ReferenceObject $fwrules_og -DifferenceObject $fwrules_new -PassThru | Where-Object {$_.SideIndicator -eq '=>'}
+        }
+    }
     if((Test-Path $og_results\netshares.html) -and (Test-Path $new_results\netshares.html)){
         write-host "[+] Comparing Network Shares information."
         $netshares_og = Get-Content -Path $og_results\netshares.html
         $netshares_new = Get-Content -Path $new_results\netshares.html
         $netshares_diff = Compare-Object -ReferenceObject $netshares_og -DifferenceObject $netshares_new -PassThru | Where-Object {$_.SideIndicator -eq '=>'}   
     }
-    <#if($exhaustiveCompare){
+    if($exhaustiveCompare){
         if((Test-Path $og_results\hashes.html) -and (Test-Path $new_results\hashes.html)){
             write-host "[+] Comparing Hashes of files of interest."
             $hashes_og = Get-Content -Path $og_results\hashes.html
@@ -53,26 +60,28 @@ function Generate-Html-report-diff {
             $hashes_diff = Compare-Object -ReferenceObject $hashes_og -DifferenceObject $hashes_new -PassThru | Where-Object {$_.SideIndicator -eq '=>'}
         }
     }
-    if((Test-Path $og_results\localusers.html) -and (Test-Path $new_results\localusers.html)){
-        write-host "[+] Comparing Local Users."
-        $localusers_og = Get-Content -Path $og_results\localusers.html
-        $localusers_new = Get-Content -Path $new_results\localusers.html
-        $localusers_diff = Compare-Object -ReferenceObject $localusers_og -DifferenceObject $localusers_new -PassThru | Where-Object {$_.SideIndicator -eq '=>'}
-    }#>
+    if(-Not $diffEnv){
+        if((Test-Path $og_results\localusers.html) -and (Test-Path $new_results\localusers.html)){
+            write-host "[+] Comparing Local Users."
+            $localusers_og = Get-Content -Path $og_results\localusers.html
+            $localusers_new = Get-Content -Path $new_results\localusers.html
+            $localusers_diff = Compare-Object -ReferenceObject $localusers_og -DifferenceObject $localusers_new -PassThru | Where-Object {$_.SideIndicator -eq '=>'}
+        }
+    }
     if((Test-Path $og_results\sshkeys.html) -and (Test-Path $new_results\sshkeys.html)){
         write-host "[+] Comparing Authorized SSH Keys."
         $sshkeys_og = Get-Content -Path $og_results\sshkeys.html
         $sshkeys_new = Get-Content -Path $new_results\sshkeys.html    
         $sshkeys_diff = Compare-Object -ReferenceObject $sshkeys_og -DifferenceObject $sshkeys_new -PassThru | Where-Object {$_.SideIndicator -eq '=>'}
     }
-    <#if($exhaustiveCompare){
+    if($exhaustiveCompare){
         if((Test-Path $og_results\netstat.html) -and (Test-Path $new_results\netstat.html)){
             write-host "[+] Comparing Netstat output."
             $netstat_og = Get-Content -Path $og_results\netstat.html
             $netstat_new = Get-Content -Path $new_results\netstat.html
             $netstat_diff = Compare-Object -ReferenceObject $netstat_og -DifferenceObject $netstat_new -PassThru | Where-Object {$_.SideIndicator -eq '=>'}
         }
-    }#>
+    }
     if((Test-Path $og_results\hotfix.html) -and (Test-Path $new_results\hotfix.html)){
         write-host "[+] Comparing Hotfix installed."
         $hotfix_og = Get-Content -Path $og_results\hotfix.html
@@ -99,12 +108,14 @@ function Generate-Html-report-diff {
             $pslist_diff = Compare-Object -ReferenceObject $pslist_og -DifferenceObject $pslist_new -PassThru | Where-Object {$_.SideIndicator -eq '=>'}
         }
     }
-    <#if((Test-Path $og_results\dirlist.html) -and (Test-Path $new_results\dirlist.html)){
-        write-host "[+] Comparing Users directory listing entries."
-        $dirlist_og = Get-Content -Path $og_results\dirlist.html
-        $dirlist_new = Get-Content -Path $new_results\dirlist.html    
-        $dirlist_diff = Compare-Object -ReferenceObject $dirlist_og -DifferenceObject $dirlist_new -PassThru | Where-Object {$_.SideIndicator -eq '=>'}
-    }#>
+    if(-Not $diffEnv){    
+        if((Test-Path $og_results\dirlist.html) -and (Test-Path $new_results\dirlist.html)){
+            write-host "[+] Comparing Users directory listing entries."
+            $dirlist_og = Get-Content -Path $og_results\dirlist.html
+            $dirlist_new = Get-Content -Path $new_results\dirlist.html    
+            $dirlist_diff = Compare-Object -ReferenceObject $dirlist_og -DifferenceObject $dirlist_new -PassThru | Where-Object {$_.SideIndicator -eq '=>'}
+        }
+    }
     if((Test-Path $og_results\svcfailure.html) -and (Test-Path $new_results\svcfailure.html)){
         write-host "[+] Comparing Service Failure Actions."
         $svcfailure_og = Get-Content -Path $og_results\svcfailure.html
@@ -485,7 +496,7 @@ function Generate-Html-newModules-report {
 }
 
 
-# Take all the zip in output folder, deflate them and store them in latest directory + store the zip in backup folder
+# Take all the zip in output folder, deflate them and store them in latest directory + store original output in backup folder
 if($cmd -eq "update"){
     $archives = Get-ChildItem -Path $outputDir | Where-Object {$_.Name.EndsWith(".zip")}
     Write-Host "[+] Cleaning directory "$latestDir -foregroundcolor green
@@ -576,8 +587,7 @@ if($cmd -eq "report"){
     }
 }
 
-
-# Generates small report usefull for hardening 
+# Generates Hardening report containing only artefacts that may contain elements that need to be hardened  
 if($cmd -eq "hardening"){
     
     $currentTime = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -595,7 +605,8 @@ if($cmd -eq "hardening"){
     Write-Host "[+] HTML reports generated at in report directory" -foregroundcolor green    
 }
 
-# Generates small report listing all new module information (not in OG result but in Latest results) 
+# Generates a report containing only the information from the new modules (for which there is information in Latests dir and not 
+# in the OGs dir > to be used in case new modules are added (or activated) between two collections 
 if($cmd -eq "new"){
     
     $currentTime = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -614,4 +625,112 @@ if($cmd -eq "new"){
     }
     $html | Out-File -FilePath $reportFileName
     Write-Host "[+] HTML reports generated at in report directory" -foregroundcolor green    
+}
+
+# Fix autoruns.html to remove the Time column
+function fixAutorunsHTML{
+    param (
+        [Parameter(mandatory=$true)]$htmlIN
+    )   
+    
+    $old = $htmlIN+".old"
+    copy-item -Path $htmlIN -Destination $old
+    
+    $table = Get-Content -Path $htmlIN
+    $html = ""
+    foreach($line in $table){
+        if($line.StartsWith("<tr><th>Time</th>")){
+            $brol = $line -replace "<th>Time</th>", ""
+        }elseif($line.StartsWith("<colgroup><col/>")){
+            $brol = $line -replace "<colgroup>.*?</colgroup>", ""
+        }
+        elseif($line.StartsWith("<tr><td></td>")){
+            $brol = $line -replace "<tr><td></td>", ""
+        }
+        else{
+            $brol = $line -replace "<td>.*?(AM|PM)</td>", ""
+            $brol = $line -replace "<td>\d{1,2}/\d{1,2}/\d{2,4} \d{1,2}:\d{1,2}</td>"
+        }
+        $html += $brol+"`r`n"
+    }
+    $html | Out-File -FilePath $htmlIN
+}
+
+# Fix pslist.html to remove the PID
+function fixPsListHTML{
+    param (
+        [Parameter(mandatory=$true)]$htmlIN
+    )   
+        $old = $htmlIN+".old"
+        copy-item -Path $htmlIN -Destination $old
+    
+        $table = Get-Content -Path $htmlIN
+        $html = ""
+
+        foreach($line in $table){
+            if($line.StartsWith("<tr><th>Id</th>")){
+                $brol = $line -replace "<th>Id</th>", ""
+            }elseif($line.StartsWith("<colgroup><col/>")){
+                $brol = $line -replace "<colgroup>.*?</colgroup>", ""
+            }
+            elseif($line.StartsWith("<tr><td></td>")){
+                $brol = $line -replace "<tr><td></td>", ""
+            }
+            else{
+                $brol = $line -replace "<td>\d{1,5}</td>", ""
+            }
+            $html += $brol+"`r`n"
+        }
+        $html | Out-File -FilePath $htmlIN
+
+}
+# Fix netstat.html to remove the PID
+function fixNetstatHTML{
+    param (
+        [Parameter(mandatory=$true)]$htmlIN
+    )   
+        $old = $htmlIN+".old"
+        copy-item -Path $htmlIN -Destination $old
+    
+        $table = Get-Content -Path $htmlIN
+        $html = ""
+
+        foreach($line in $table){
+            if($line.EndsWith("<th>PID</th></tr>")){
+                $brol = $line -replace "<th>PID</th>", ""
+            }elseif($line.StartsWith("<colgroup><col/>")){
+                $brol = $line -replace "<colgroup>.*?</colgroup>", ""
+            }
+            else{
+                $brol = $line -replace "<td>\d{1,5}</td></tr>", "</tr>"
+            }
+            $html += $brol+"`r`n"
+        }
+        $html | Out-File -FilePath $htmlIN
+}
+
+
+# This command should be use for better diff analysis amongst data coming from different env or hosts 
+# A backup of the original file is maintained with .old extention.
+if($cmd -eq "fixhtml"){
+    $latests = (Get-ChildItem -Path $latestDir -Directory).FullName
+    foreach($latest in $latests){
+        $pslistFiles = Get-ChildItem -Path $latest | Where-Object {$_.Name -eq "pslist.html"}
+        $netstatFiles = Get-ChildItem -Path $latest | Where-Object {$_.Name -eq "netstat.html"}
+        $autorunsFiles = Get-ChildItem -Path $latest | Where-Object {$_.Name -eq "autoruns.html"}
+    
+        foreach($autorunsFile in $autorunsFiles){
+            write-host "[+] Fixing "$autorunsFile.FullName -foregroundcolor yellow
+            fixAutorunsHTML $autorunsFile.FullName
+        }
+        foreach($pslistFile in $pslistFiles){
+            write-host "[+] Fixing "$pslistFile.FullName -foregroundcolor yellow
+            fixPsListHTML $pslistFile.FullName
+        }
+        foreach($netstatFile in $netstatFiles){
+            write-host "[+] Fixing "$netstatFile.FullName -foregroundcolor yellow
+            fixNetstatHTML $netstatFile.FullName
+        }
+
+    }
 }
